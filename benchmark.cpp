@@ -15,7 +15,12 @@
 
 #include <cmath> // For: fabs
 
+#ifdef __APPLE__
+#include </Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers/Sparse/BLAS.h>
+#else
 #include <cblas.h>
+#endif
+
 #include <string.h>
 
 // external definitions for mmul's
@@ -42,7 +47,7 @@ bool check_accuracy(double *A, double *Anot, int nvalues)
   double eps = 1e-5;
   for (size_t i = 0; i < nvalues; i++) 
   {
-    if (fabsf(A[i] - Anot[i]) > eps) {
+    if (std::abs(A[i] - Anot[i]) > eps) {
        return false;
     }
   }
@@ -90,13 +95,19 @@ int main(int argc, char** argv)
         memcpy((void *)Xcopy, (const void *)X, sizeof(double)*n);
         memcpy((void *)Ycopy, (const void *)Y, sizeof(double)*n);
 
-        // insert start timer code here
+        std::chrono::time_point<std::chrono::high_resolution_clock>
+                start_time = std::chrono::high_resolution_clock::now();
 
         // call the method to do the work
-        my_dgemv(n, A, X, Y); 
+        my_dgemv(n, A, X, Y);
 
-        // insert end timer code here, and print out the elapsed time for this problem size
+        std::chrono::time_point<std::chrono::high_resolution_clock>
+                end_time = std::chrono::high_resolution_clock::now();
 
+        std::chrono::duration<double>
+                elapsed = end_time - start_time;
+
+        std::cout << "Elapsed time is: " << elapsed.count() * 1000 << " ms" << std::endl;
 
         // now invoke the cblas method to compute the matrix-vector multiplye
         reference_dgemv(n, Acopy, Xcopy, Ycopy);
